@@ -1,7 +1,7 @@
 import throttle from 'lodash/throttle';
 import React, { useCallback, useRef, useState } from 'react';
 import { View, Image, StyleSheet } from 'react-native';
-import { Utils, TYSdk } from 'tuya-panel-kit';
+import { Utils, TYSdk, Button } from 'tuya-panel-kit';
 import Res from '@res';
 import { useSelector } from '@models';
 import { lampPutDpData } from '@api';
@@ -15,12 +15,15 @@ import DpCodes from '../../../config/dpCodes';
 
 const { convertX: cx, convertY: cy } = Utils.RatioUtils;
 const { isSupportTemp, isSupportBright } = SupportUtils;
+
 const { withTheme } = Utils.ThemeUtils;
 const {
   brightCode,
   temperatureCode: tempCode,
   controlCode: controlDataCode,
   workModeCode,
+  autoCode,
+  readCode,
 } = DpCodes;
 const TYDevice = TYSdk.device;
 
@@ -59,10 +62,19 @@ const MainWhiteView: React.FC<MainWhiteViewProps> = ({
   const tempBgRef = useRef<Image>(null);
   const temperature = useSelector(state => state.dpState[tempCode]) as number;
   const brightness = useSelector(state => state.dpState[brightCode]) as number;
+  const auto = useSelector(state => state.dpState[autoCode]) as boolean;
+  console.log(auto);
 
   const [brightDpMin] = useState(_.get(TYDevice.getDpSchema(brightCode), 'min') || 10);
   const [brightDpMax] = useState(_.get(TYDevice.getDpSchema(brightCode), 'max') || 1000);
 
+  const handlePressAuto = () => {
+    lampPutDpData({
+      [autoCode]: !!auto,
+    });
+
+    console.log('hello world');
+  };
   const getStops = useCallback(() => {
     const warmStart = {
       offset: '0%',
@@ -218,11 +230,88 @@ const MainWhiteView: React.FC<MainWhiteViewProps> = ({
           />
         )}
       </View>
+      <View style={styles.bottomView}>
+        <Button
+          iconColor="#323f6d"
+          textDirection="right"
+          size={25}
+          iconPath={icons.auto}
+          style={{
+            width: cx(48),
+            height: cx(48),
+            backgroundColor: 'white',
+          }}
+          textStyle={{
+            color: '#323f6d',
+            marginLeft: 0,
+            marginRight: cx(15),
+          }}
+          wrapperStyle={{
+            backgroundColor: 'white',
+            borderRadius: cx(12),
+            marginLeft: cx(27),
+            position: 'relative',
+            top: cx(-12),
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: 1,
+            },
+            shadowOpacity: 0.5,
+            shadowRadius: 8,
+            elevation: 8,
+          }}
+          text="自动模式"
+          onPress={handlePressAuto}
+        />
+        <Button
+          iconColor="#4d5d8e"
+          textDirection="right"
+          size={24}
+          iconPath={icons.read}
+          style={{
+            width: cx(46),
+            height: cx(46),
+            backgroundColor: '#1d254e',
+          }}
+          textStyle={{
+            color: '#4d5d8e',
+            marginLeft: 0,
+            marginRight: cx(15),
+          }}
+          wrapperStyle={{
+            borderWidth: 2,
+            borderColor: '#4d5d8e',
+            borderStyle: 'solid',
+            backgroundColor: '#1d254e',
+            borderRadius: cx(12),
+            marginRight: cx(27),
+            position: 'relative',
+            top: cx(-12),
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: 1,
+            },
+            shadowOpacity: 0.5,
+            shadowRadius: 8,
+            elevation: 8,
+          }}
+          text="阅读模式"
+        />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  bottomView: {
+    height: cy(100),
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    marginTop: cy(15),
+  },
   container: {
     flex: 1,
     alignSelf: 'stretch',
@@ -230,14 +319,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: cy(40),
   },
-
   displayView: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   controlView: {
-    height: cy(120),
+    height: cy(100),
     alignSelf: 'stretch',
     justifyContent: 'space-around',
     marginTop: cy(15),

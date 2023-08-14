@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect, useRef } from 'react';
+// TouchableOpacity触摸组件，使用时改变透明度
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { Utils, TYSdk, Popup } from 'tuya-panel-kit';
 import throttle from 'lodash/throttle';
@@ -75,11 +76,14 @@ const HomeBottomView: React.FC<HomeBottomViewProps> = ({
 
   return (
     <View style={styles.container}>
+      {/* fontColor 颜色值的背景颜色设置为其 alpha 值为 0.06 的版本，然后将其转换为一个 RGB 字符串表示。 */}
       <View style={[styles.content, { backgroundColor: color(fontColor).alpha(0.06).rgbString() }]}>
         {isSupportCountdown() ? (
           <TouchableOpacity
+          // 如果此“accessibilityLabel”与用户界面中的倒计时器相关联，则将其设置为“HomeScene_BottomView_Countdown”将意味着当屏幕阅读器遇到此元素时，它将宣布类似“倒计时器在底部视图中”的内容
             accessibilityLabel="HomeScene_BottomView_Countdown"
             style={styles.textView}
+            //  activeOpacity”属性通常与可触摸组件（如按钮或可触摸视图）一起使用来控制
             activeOpacity={0.9}
             onPress={_handleCountdownPress}
           >

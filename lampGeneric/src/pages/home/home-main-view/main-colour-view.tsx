@@ -6,7 +6,7 @@ import { useSelector } from '@models';
 import { lampPutDpData } from '@api';
 import Res from '@res';
 import HuePicker from '../../../components/HuePicker';
-import SliderView from '../../../components/SliderView';
+import AcrylicSliderView from '../../../components/SliderView';
 import icons from '../../../res/iconfont';
 import DpCodes from '../../../config/dpCodes';
 import { ColorParser } from '../../../utils';
@@ -143,7 +143,7 @@ const MainColourView: React.FC<MainColourViewProps> = ({
 
       <View style={styles.controlView}>
         {/* 亮度 范围10-1000 */}
-        <SliderView
+        <AcrylicSliderView
           accessibilityLabel="HomeScene_ColourView_Brightness"
           theme={{ fontColor }}
           icon={icons.brightness}
@@ -155,7 +155,7 @@ const MainColourView: React.FC<MainColourViewProps> = ({
           onSlidingComplete={handleBrightnessComplete}
         />
         {/* 饱和度 范围0-1000 */}
-        <SliderView
+        <AcrylicSliderView
           accessibilityLabel="HomeScene_ColourView_Saturation"
           theme={{ fontColor }}
           icon={icons.saturation}
