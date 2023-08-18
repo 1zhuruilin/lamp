@@ -1,6 +1,12 @@
 /* eslint-disable prettier/prettier */
 export default {
   zh: {
+    hour: '小时',
+    minute: '分钟',
+    auto_tip: '自动模式',
+    read_tip: '阅读模式',
+    timing_tip: '定时',
+    auto_off_tip: '分钟后自动关闭',
     edit: '编辑',
     delete: '移除',
     schedule: '光闹钟',
@@ -79,6 +85,12 @@ export default {
   },
 
   en: {
+    hour: 'hour',
+    minute: 'minute',
+    auto_tip: 'automatic mode',
+    read_tip: 'reading mode',
+    timing_tip: 'timing',
+    auto_off_tip: 'It turns off automatically after a minute',
     edit: 'Edit',
     delete: 'Delete',
     schedule: 'Schedule',

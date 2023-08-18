@@ -1,7 +1,7 @@
 import throttle from 'lodash/throttle';
-import React, { useCallback, useRef, useState } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
-import { Utils, TYSdk, Button } from 'tuya-panel-kit';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
+import { View, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { Utils, TYSdk, Button, TYText, Popup } from 'tuya-panel-kit';
 import Res from '@res';
 import { useSelector } from '@models';
 import { lampPutDpData } from '@api';
@@ -12,6 +12,7 @@ import TempCirclePicker from '../../../components/TempCirclePicker';
 import SliderView from '../../../components/SliderView';
 import icons from '../../../res/iconfont';
 import DpCodes from '../../../config/dpCodes';
+import Strings from '../../../i18n';
 
 const { convertX: cx, convertY: cy } = Utils.RatioUtils;
 const { isSupportTemp, isSupportBright } = SupportUtils;
@@ -24,6 +25,8 @@ const {
   workModeCode,
   autoCode,
   readCode,
+  setCode,
+  leftCode,
 } = DpCodes;
 const TYDevice = TYSdk.device;
 
@@ -63,17 +66,60 @@ const MainWhiteView: React.FC<MainWhiteViewProps> = ({
   const temperature = useSelector(state => state.dpState[tempCode]) as number;
   const brightness = useSelector(state => state.dpState[brightCode]) as number;
   const auto = useSelector(state => state.dpState[autoCode]) as boolean;
-  console.log(auto);
+  const read = useSelector(state => state.dpState[readCode]) as boolean;
+  const set = useSelector(state => state.dpState[setCode]) as number;
+  const left = useSelector(state => state.dpState[leftCode]) as number;
 
+  const [state, setState] = React.useState({ countdown: 0 });
   const [brightDpMin] = useState(_.get(TYDevice.getDpSchema(brightCode), 'min') || 10);
   const [brightDpMax] = useState(_.get(TYDevice.getDpSchema(brightCode), 'max') || 1000);
 
-  const handlePressAuto = () => {
-    lampPutDpData({
-      [autoCode]: !!auto,
+  const handlePressSet = () => {
+    Popup.countdown({
+      title: Strings.getLang('dp_countdown'),
+      cancelText: Strings.getLang('cancel'),
+      confirmText: Strings.getLang('confirm'),
+      hourText: Strings.getLang('hour'),
+      minuteText: Strings.getLang('minute'),
+      value: state.countdown,
+      onMaskPress: ({ close }) => close(),
+      onConfirm: (data, { close }) => {
+        console.log(data.hour * 60 + data.minute);
+        lampPutDpData({
+          [setCode]: data.hour * 60 + data.minute,
+        });
+        close();
+      },
     });
-
-    console.log('hello world');
+  };
+  const time = set * 60;
+  const [countdownSeconds, setCountdownSeconds] = useState(time);
+  useEffect(() => {
+    setCountdownSeconds(set * 60);
+  }, [set]);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log(countdownSeconds);
+      setCountdownSeconds(s => {
+        if (s > 0) {
+          return s - 1;
+        }
+        return s;
+      });
+    }, 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+  const formatTime = seconds => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+  const handlePressRead = () => {
+    lampPutDpData({
+      [readCode]: !read,
+    });
   };
   const getStops = useCallback(() => {
     const warmStart = {
@@ -195,6 +241,27 @@ const MainWhiteView: React.FC<MainWhiteViewProps> = ({
 
   return (
     <View style={styles.container}>
+      <View style={{ position: 'absolute', top: 3, right: 20 }}>
+        <TouchableOpacity onPress={handlePressSet}>
+          <View
+            style={{
+              alignItems: 'center',
+              backgroundColor: '#1d254e',
+              width: 35,
+              height: 60,
+              borderRadius: cx(60),
+            }}
+          >
+            <Image
+              style={{ width: cx(20), height: cx(20), marginTop: 7 }}
+              source={require('../../../res/clock.png')}
+            />
+            <TYText style={{ marginTop: 5, color: 'black' }}>
+              {Strings.getLang('timing_tip')}
+            </TYText>
+          </View>
+        </TouchableOpacity>
+      </View>
       <View style={styles.displayView}>
         <TempCirclePicker
           value={temperature}
@@ -215,6 +282,12 @@ const MainWhiteView: React.FC<MainWhiteViewProps> = ({
           <Image source={Res.led} style={{ width: cx(28), height: cx(39) }} />
         </View>
       </View>
+      <View style={{ justifyContent: 'center', alignContent: 'center', alignItems: 'center' }}>
+        <TYText color="white" size={cx(30)}>
+          {formatTime(countdownSeconds)}
+        </TYText>
+        <TYText color="white">{Strings.getLang('auto_off_tip')}</TYText>
+      </View>
       <View style={styles.controlView}>
         {isSupportWhiteBright.current && (
           <SliderView
@@ -232,22 +305,22 @@ const MainWhiteView: React.FC<MainWhiteViewProps> = ({
       </View>
       <View style={styles.bottomView}>
         <Button
-          iconColor="#323f6d"
+          iconColor={auto ? '#323f6d' : 'white'}
           textDirection="right"
           size={25}
           iconPath={icons.auto}
           style={{
             width: cx(48),
             height: cx(48),
-            backgroundColor: 'white',
+            backgroundColor: auto ? 'white' : '#323f6d',
           }}
           textStyle={{
-            color: '#323f6d',
+            color: auto ? '#323f6d' : 'white',
             marginLeft: 0,
             marginRight: cx(15),
           }}
           wrapperStyle={{
-            backgroundColor: 'white',
+            backgroundColor: auto ? 'white' : '#323f6d',
             borderRadius: cx(12),
             marginLeft: cx(27),
             position: 'relative',
@@ -261,29 +334,29 @@ const MainWhiteView: React.FC<MainWhiteViewProps> = ({
             shadowRadius: 8,
             elevation: 8,
           }}
-          text="自动模式"
-          onPress={handlePressAuto}
+          text={Strings.getLang('auto_tip')}
+          onPress={handlePressSet}
         />
         <Button
-          iconColor="#4d5d8e"
+          iconColor={read ? '#4d5d8e' : '#1d254e'}
           textDirection="right"
           size={24}
           iconPath={icons.read}
           style={{
             width: cx(46),
             height: cx(46),
-            backgroundColor: '#1d254e',
+            backgroundColor: read ? '#1d254e' : '#4d5d8e',
           }}
           textStyle={{
-            color: '#4d5d8e',
+            color: read ? '#4d5d8e' : '#1d254e',
             marginLeft: 0,
             marginRight: cx(15),
           }}
           wrapperStyle={{
             borderWidth: 2,
-            borderColor: '#4d5d8e',
+            borderColor: read ? '#4d5d8e' : '#1d254e',
             borderStyle: 'solid',
-            backgroundColor: '#1d254e',
+            backgroundColor: read ? '#1d254e' : '#4d5d8e',
             borderRadius: cx(12),
             marginRight: cx(27),
             position: 'relative',
@@ -297,7 +370,8 @@ const MainWhiteView: React.FC<MainWhiteViewProps> = ({
             shadowRadius: 8,
             elevation: 8,
           }}
-          text="阅读模式"
+          text={Strings.getLang('read_tip')}
+          onPress={handlePressRead}
         />
       </View>
     </View>
@@ -306,7 +380,7 @@ const MainWhiteView: React.FC<MainWhiteViewProps> = ({
 
 const styles = StyleSheet.create({
   bottomView: {
-    height: cy(100),
+    height: cy(45),
     alignSelf: 'stretch',
     flexDirection: 'row',
     justifyContent: 'space-evenly',

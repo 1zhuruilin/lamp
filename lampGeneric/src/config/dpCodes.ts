@@ -9,5 +9,7 @@ export default {
   countdownCode: 'countdown',
   controlCode: 'control_data',
   autoCode: 'auto',
-  readCode:'read',
+  readCode: 'read',
+  setCode: 'countdown_set',
+  leftCode: 'countdown_left',
 };
